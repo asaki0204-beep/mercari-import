@@ -31,13 +31,18 @@ def convert(data: bytes, filename: str) -> pd.DataFrame:
         names=["order_no", "order_date", "subtotal"],
     )
     df = df.dropna(subset=["order_no", "order_date"])
+    df = df[df["subtotal"].astype(int) != 0]
+
+    subtotal = df["subtotal"].astype(int)
+    income = subtotal.where(subtotal < 0, 0).abs().replace(0, "")
+    expense = subtotal.where(subtotal > 0, 0).replace(0, "")
 
     out = pd.DataFrame(
         {
             "日付": pd.to_datetime(df["order_date"]).dt.strftime("%Y/%m/%d"),
             "摘要": prefix + " " + df["order_no"].astype(str),
-            "入金金額": "",
-            "出金金額": df["subtotal"].astype(int),
+            "入金金額": income,
+            "出金金額": expense,
         }
     )
     return out
